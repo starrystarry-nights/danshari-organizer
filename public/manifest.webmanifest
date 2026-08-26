@@ -1,0 +1,11 @@
+{
+  "name": "断舍离整理教练",
+  "short_name": "整理教练",
+  "description": "拿起一件东西，回答几个自然的问题，得到一个清楚的决定。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3efe6",
+  "theme_color": "#f3efe6",
+  "lang": "zh-CN",
+  "icons": [{ "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
