@@ -241,7 +241,7 @@ button:focus-visible { outline: 3px solid rgba(101, 121, 110, .3); outline-offse
 .total span { color: var(--secondary-label); font-size: 15px; }
 .total strong { color: var(--label); font-size: 34px; line-height: 1; font-weight: 650; }
 .total small { margin-left: 3px; color: var(--secondary-label); font-size: 13px; font-weight: 400; }
-.count-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); border: .5px solid var(--separator); border-radius: 12px; overflow: hidden; }
+.count-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: .5px solid var(--separator); border-radius: 12px; overflow: hidden; }
 .count-grid div { min-width: 0; padding: 11px 2px; border-right: .5px solid var(--separator); text-align: center; }
 .count-grid div:last-child { border-right: 0; }
 .count-grid span, .count-grid b { display: block; }
