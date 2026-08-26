@@ -219,6 +219,22 @@ button:focus-visible { outline: 3px solid rgba(101, 121, 110, .3); outline-offse
 .result-icon { width: 48px; height: 48px; margin: 0 auto 18px; border-radius: 50%; display: grid; place-items: center; color: var(--tint); background: var(--tint-soft); }
 .result-card h1 { font-size: 34px; }
 .verdict { max-width: 400px; margin: 14px auto 28px; color: var(--secondary-label); font-size: 15px; line-height: 1.6; }
+.session-summary {
+  min-height: 54px;
+  margin: 0 auto 18px;
+  padding: 10px 14px;
+  border: .5px solid var(--separator);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--secondary-label);
+  background: var(--secondary-background);
+  font-size: 14px;
+  text-align: left;
+}
+.session-summary strong { color: var(--label); font-size: 24px; line-height: 1; font-weight: 650; }
+.session-summary small { margin-left: 3px; color: var(--secondary-label); font-size: 12px; font-weight: 400; }
 .result-actions { max-width: 380px; margin: auto; }
 .result-actions .secondary { margin-top: 10px; }
 .settlement .total { margin: 22px 0 16px; padding: 15px 0; border-top: .5px solid var(--separator); border-bottom: .5px solid var(--separator); display: flex; justify-content: space-between; align-items: baseline; }
