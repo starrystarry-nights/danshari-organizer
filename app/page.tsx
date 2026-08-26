@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, Check, ChevronRight, PackageOpen, RotateCcw, Scale } from "lucide-react";
 
 type Kind = "衣服" | "鞋" | "包" | "其他";
-type Decision = "留下" | "转卖" | "捐赠" | "舍弃" | "观察3个月";
+type Decision = "留下" | "捐赠" | "舍弃" | "观察3个月";
 type Answer = { id: string; value: string };
 type Item = { id: string; name: string; kind: Kind; decision: Decision; weight?: number };
+type StoredItem = Omit<Item, "decision"> & { decision: Decision | "转卖" };
 type Stage = "area" | "item" | "question" | "result" | "settlement";
 
 const STORAGE_KEY = "danshari-session-v1";
-const decisions: Decision[] = ["留下", "转卖", "捐赠", "舍弃", "观察3个月"];
+const decisions: Decision[] = ["留下", "捐赠", "舍弃", "观察3个月"];
 
 function nextQuestion(answers: Answer[]) {
   const has = (id: string) => answers.some((a) => a.id === id);
@@ -18,8 +19,10 @@ function nextQuestion(answers: Answer[]) {
   if (!has("condition")) return { id: "condition", text: "先客观看看，它现在的状态怎么样？", options: ["状态很好", "有一点使用痕迹", "已经破损、变形或无法正常使用"] };
   if (get("condition") === "已经破损、变形或无法正常使用") return null;
   if (!has("use")) return { id: "use", text: "你最近一次真正穿它或用它，是什么时候？", options: ["最近3个月", "半年到一年内", "一年多以前", "买来后从没用过"] };
+  if (!has("choice")) return { id: "choice", text: "平时需要这类东西时，你会主动想到它吗？", options: ["会，它通常是我的首选", "偶尔会想到", "不会，几乎想不起它"] };
   if (!has("scene")) return { id: "scene", text: "接下来几个月，有哪个明确的场合会用到它吗？", options: ["有，而且能说出具体场合", "可能会，但还不确定", "想不到会用在什么时候"] };
   if (!has("fit")) return { id: "fit", text: "现在穿上或拿起它，你的真实感觉更接近哪一种？", options: ["舒服、顺眼，愿意直接出门", "还可以，但总觉得差一点", "不舒服或会忍不住换掉"] };
+  if (!has("alternative")) return { id: "alternative", text: "你手里有更顺手、更常选的同类物品吗？", options: ["没有，它就是最好用的", "有，但它们各有用途", "有，它总是被别的替代"] };
   if (!has("rebuy")) return { id: "rebuy", text: "如果今天第一次在商场遇到它，你还会买下吗？", options: ["会，我现在还是喜欢", "会犹豫", "不会"] };
   return null;
 }
@@ -27,11 +30,9 @@ function nextQuestion(answers: Answer[]) {
 function judge(answers: Answer[]): { decision: Decision; reason: string } {
   const get = (id: string) => answers.find((a) => a.id === id)?.value ?? "";
   if (get("condition").includes("破损")) return { decision: "舍弃", reason: "它已经结束使用周期，不需要再占你的空间。" };
-  const used = get("use"); const scene = get("scene"); const fit = get("fit"); const rebuy = get("rebuy");
-  if (rebuy.startsWith("会，我") && fit.startsWith("舒服") && (used === "最近3个月" || scene.startsWith("有，而且"))) return { decision: "留下", reason: "你现在仍会主动选择它，而且用起来舒服，它还属于你的生活。" };
-  if ((used === "一年多以前" || used.includes("从没")) && rebuy === "不会") return { decision: "转卖", reason: "它本身还有价值，只是你已经不会再选择它了。" };
-  if (fit.startsWith("不舒服") && scene.startsWith("想不到")) return { decision: "捐赠", reason: "它还能继续使用，但已经不需要留在你的生活里。" };
-  if (rebuy === "不会" || fit.startsWith("不舒服") || scene.startsWith("想不到")) return { decision: "转卖", reason: "它的状态还可以，但和现在的你已经没有足够真实的联系。" };
+  const used = get("use"); const choice = get("choice"); const scene = get("scene"); const fit = get("fit"); const alternative = get("alternative"); const rebuy = get("rebuy");
+  if (rebuy.startsWith("会，我") && fit.startsWith("舒服") && !choice.startsWith("不会") && !alternative.startsWith("有，它总是") && (used === "最近3个月" || scene.startsWith("有，而且"))) return { decision: "留下", reason: "你现在仍会主动选择它，而且用起来舒服，它还属于你的生活。" };
+  if (rebuy === "不会" || fit.startsWith("不舒服") || scene.startsWith("想不到") || choice.startsWith("不会") || alternative.startsWith("有，它总是")) return { decision: "捐赠", reason: "它还能继续使用，但已经不需要留在你的生活里。" };
   return { decision: "观察3个月", reason: "你对它还有真实兴趣，但证据还不够。放到最容易看到的位置，3个月内一次都没用，就直接处理。" };
 }
 
@@ -48,14 +49,14 @@ export default function Home() {
 
   useEffect(() => {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) { const data = JSON.parse(saved); setArea(data.area || ""); setItems(data.items || []); }
+    if (saved) { const data = JSON.parse(saved); setArea(data.area || ""); setItems((data.items || []).map((item: StoredItem): Item => item.decision === "转卖" ? { ...item, decision: "捐赠" } : item)); }
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => undefined);
   }, []);
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify({ area, items })); }, [area, items]);
 
   const question = nextQuestion(answers);
   const counts = useMemo(() => Object.fromEntries(decisions.map((d) => [d, items.filter((i) => i.decision === d).length])) as Record<Decision, number>, [items]);
-  const reduced = items.filter((i) => ["转卖", "捐赠", "舍弃"].includes(i.decision)).reduce((n, i) => n + (i.weight || 0), 0);
+  const reduced = items.filter((i) => ["捐赠", "舍弃"].includes(i.decision)).reduce((n, i) => n + (i.weight || 0), 0);
 
   function answer(value: string) {
     if (!question) return;
